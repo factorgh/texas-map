@@ -4,8 +4,13 @@ import React, { useState } from "react";
 // import MapDisplay from "./(components)/map-display";
 import SearchBar from "./(components)/search";
 import Filter from "./(components)/filter";
+import dynamic from "next/dynamic";
 
 type Props = {};
+
+const Mapa = dynamic(() => import("./(components)/map-display"), {
+  ssr: false,
+});
 
 function Maps({}: Props) {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -41,10 +46,7 @@ function Maps({}: Props) {
       </div>
 
       {/* Map display */}
-      {/* <MapDisplay
-        searchCoords={searchCoords}
-        selectedCategory={selectedCategory}
-      /> */}
+      <Mapa searchCoords={searchCoords} selectedCategory={selectedCategory} />
     </div>
   );
 }

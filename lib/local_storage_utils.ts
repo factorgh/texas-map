@@ -1,3 +1,5 @@
+"use client";
+
 export const getFavorites = (): string[] | null => {
   if (typeof window !== "undefined") {
     const savedFavorites = localStorage.getItem("favourites");
