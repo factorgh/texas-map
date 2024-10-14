@@ -78,21 +78,21 @@ const MapDisplay = ({
   const [drillData, setDrillData] = useState<drillData[]>([]);
 
   // Set isClient to true once component is mounted
-  // useEffect(() => {
-  //   if (typeof window !== "undefined") {
-  //     setIsClient(true);
-  //     const savedFavorites = getFavorites();
-  //     setFavourites(savedFavorites || []);
-  //   }
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+      const savedFavorites = getFavorites();
+      setFavourites(savedFavorites || []);
+    }
 
-  //   const fetchDrillData = async () => {
-  //     const response = await fetch("/api/drills");
-  //     const data = await response.json();
-  //     setDrillData(data);
-  //   };
+    const fetchDrillData = async () => {
+      const response = await fetch("/api/drills");
+      const data = await response.json();
+      setDrillData(data);
+    };
 
-  //   fetchDrillData();
-  // }, []);
+    fetchDrillData();
+  }, []);
 
   const handleFavouriteClick = (eventId: string) => {
     let updatedFavourites = favourites.filter((id) => id !== eventId);
@@ -139,7 +139,7 @@ const MapDisplay = ({
   });
 
   if (!isClient) {
-    return null; // Don't render anything server-side
+    return null;
   }
 
   const emptyStar = <BookmarkIcon />;
@@ -194,7 +194,6 @@ const MapDisplay = ({
               );
             })}
 
-          {/* Popup for active event */}
           {activeEvent && (
             <Popup
               position={[Number(activeEvent.lat), Number(activeEvent.lng)]}
