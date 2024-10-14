@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
 import L, { Icon, Control } from "leaflet";
 import dynamic from "next/dynamic";
@@ -8,7 +9,7 @@ import { drillData } from "@/shared/interface/drill_interface";
 import FlyToMarker from "./flytomarker";
 import { Button } from "@/components/ui/button";
 import { BookmarkFilledIcon, BookmarkIcon } from "@radix-ui/react-icons";
-import { useMap } from "react-leaflet"; // Import useMap to control map behavior
+import { useMap } from "react-leaflet";
 
 const MapContainer = dynamic(
   () => import("react-leaflet").then((mod) => mod.MapContainer),
@@ -26,13 +27,11 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
   ssr: false,
 });
 
-// Texas map boundaries
 const texasBounds: [[number, number], [number, number]] = [
   [25.8371, -106.6456],
   [36.5007, -93.5083],
 ];
 
-// Custom control for bookmarks
 const BookmarkControl = ({ onClick }: { onClick: () => void }) => {
   const map = useMap();
 
@@ -59,7 +58,7 @@ const BookmarkControl = ({ onClick }: { onClick: () => void }) => {
     };
   }, [map, onClick]);
 
-  return null; // No JSX is rendered by this component
+  return null;
 };
 
 const MapDisplay = ({
@@ -71,11 +70,26 @@ const MapDisplay = ({
 }) => {
   const [isClient, setIsClient] = useState(false);
   const [activeEvent, setActiveEvent] = useState<drillData | null>(null);
-  const [favourites, setFavourites] = useState<string[]>(() => {
-    const savedFavorites = localStorage.getItem("favourites");
-    return savedFavorites ? JSON.parse(savedFavorites) : [];
-  });
+  const [favourites, setFavourites] = useState<string[]>([]);
   const [showBookmarks, setShowBookmarks] = useState(false);
+  const [drillData, setDrillData] = useState<drillData[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsClient(true);
+      const savedFavorites = localStorage.getItem("favourites");
+      setFavourites(savedFavorites ? JSON.parse(savedFavorites) : []);
+    }
+
+    // Fetch drill data from the API route
+    const fetchDrillData = async () => {
+      const response = await fetch("/api/drills");
+      const data = await response.json();
+      setDrillData(data);
+    };
+
+    fetchDrillData();
+  }, []);
 
   const handleFavouriteClick = (eventId: string) => {
     let updatedFavourites = favourites.filter((id) => id !== eventId);
@@ -85,20 +99,19 @@ const MapDisplay = ({
     }
 
     setFavourites(updatedFavourites);
-    localStorage.setItem("favourites", JSON.stringify(updatedFavourites));
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("favourites", JSON.stringify(updatedFavourites));
+    }
   };
 
   const handleListItemClick = (drillId: string) => {
     const event = mockDrillData.find((drill) => drill.id === drillId);
     if (event) {
       setActiveEvent(event);
-      setShowBookmarks(false); // Hide bookmarks section when an item is clicked
+      setShowBookmarks(false);
     }
   };
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const pitIcon: Icon = new Icon({
     iconUrl: "marker.svg",
@@ -145,11 +158,8 @@ const MapDisplay = ({
           borderRadius: "1rem",
         }}
       >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-        />
-        {mockDrillData
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        {drillData
           .filter(
             (drill) => !selectedCategory || selectedCategory === drill.category
           )
@@ -224,43 +234,28 @@ const MapDisplay = ({
           />
         )}
 
-        {/* BookmarkControl component */}
+        {/* Bookmark Control */}
         <BookmarkControl onClick={() => setShowBookmarks(!showBookmarks)} />
       </MapContainer>
 
-      {/* Bookmark modal overlay */}
+      {/* Bookmarks Modal */}
       {showBookmarks && (
-        <div
-          className="absolute bottom-0 right-0 bg-white p-4 w-72 h-80 overflow-y-auto rounded-tl-lg shadow-xl"
-          style={{
-            zIndex: 1000, // Ensure the modal is above the map
-          }}
-        >
-          {/* Close button */}
-          <Button
-            variant="ghost"
-            className="absolute top-2 right-2 text-gray-600 hover:text-black"
-            onClick={() => setShowBookmarks(false)} // Close the modal on click
-          >
-            &times;
-          </Button>
-
-          <h2 className="flex items-center gap-2 justify-center text-black font-bold">
-            <BookmarkFilledIcon /> Bookmarked
-          </h2>
-          <ul className="flex flex-col gap-2 mt-2">
-            {favourites.map((id) => {
-              const event = mockDrillData.find((event) => event.id === id);
-              return (
-                <li
-                  key={event?.id}
-                  className="bg-gray-300 w-full p-2 rounded-md flex items-center justify-center cursor-pointer"
-                  onClick={() => handleListItemClick(event?.id as string)}
-                >
-                  {event?.title}
-                </li>
-              );
-            })}
+        <div className="absolute top-20 left-0 right-0 bottom-0 z-10 bg-white p-4 overflow-auto">
+          <h3 className="font-bold text-xl mb-2">Bookmarked Events</h3>
+          <ul>
+            {mockDrillData
+              .filter((drill) => favourites.includes(drill.id))
+              .map((event) => {
+                return (
+                  <li
+                    key={event.id}
+                    className="cursor-pointer hover:underline"
+                    onClick={() => handleListItemClick(event.id)}
+                  >
+                    {event.title}
+                  </li>
+                );
+              })}
           </ul>
         </div>
       )}
