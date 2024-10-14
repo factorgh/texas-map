@@ -1,3 +1,5 @@
+"use server";
+
 import mockDrillData from "@/api/data";
 
 export async function GET() {

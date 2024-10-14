@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import MapDisplay from "./(components)/map-display";
+// import MapDisplay from "./(components)/map-display";
 import SearchBar from "./(components)/search";
 import Filter from "./(components)/filter";
 
@@ -41,10 +41,10 @@ function Maps({}: Props) {
       </div>
 
       {/* Map display */}
-      <MapDisplay
+      {/* <MapDisplay
         searchCoords={searchCoords}
         selectedCategory={selectedCategory}
-      />
+      /> */}
     </div>
   );
 }
